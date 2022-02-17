@@ -99,28 +99,21 @@ class Board(State):
     def bfs(self):
         """breadth-first search implementation"""
 
-        open = [self] # queue data structure
-        mem = [([self.state], [None])] # tuple-list conntaining the current state path and current action/move path
+        # queue data structure
+        open = [self]
+        # tuple-list conntaining the current state path and current action/move path
+        mem = [([self.state], [None])]
 
         while open:
-            frontier, spath, mpath = open.pop(0), mem[0][0], mem[0][1]
+            frontier = open.pop(0)
+            spath, mpath = mem[0][0], mem[0][1]
 
             for move in self.table[frontier.blank]:
                 # gets all possible actions from the current blank tile
                 # swaps a copy of the current blank tile with one of its child tile
+                # original copy is unmodified for future swappings of the same parent
                 child = frontier.state[:]
                 child[frontier.blank], child[move] = child[move], child[frontier.blank]
-
-                # check if the child has already been visited (cycle)
-                # or currently in queue to be explored (redundant-path/back-edge)
-                if child not in self.closed and child not in open:
-                    self.closed.append(child)                                          # child is now visited
-                    open.append(State(move, child, self.action(frontier.blank, move))) # push child node to explore set
-                    mem.append((                                                       # keeps track of the current path from root to child state
-                        spath + [child],
-                        mpath + [self.action(frontier.blank, move)]
-                    ))
-
                 # validates whether the current state has reached its goal state
                 if child == self.goal:
                     self.path = { # save the direct paths and moves
@@ -128,7 +121,15 @@ class Board(State):
                         "move" : mpath + [self.action(frontier.blank, move)],
                     }
                     return None
-
+                # check if the child has already been visited (cycle)
+                # or currently in queue to be explored (redundant-path)
+                if child not in self.closed and child not in open:
+                    self.closed.append(child)                                          # child is now visited
+                    open.append(State(move, child, self.action(frontier.blank, move))) # push child node to explore set
+                    mem.append((                                                       # keeps track of the current path from root to child state
+                        spath + [child],
+                        mpath + [self.action(frontier.blank, move)]
+                    ))
             mem.pop(0)
 
 
